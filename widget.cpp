@@ -1,89 +1,36 @@
 #include "widget.h"
 #include "ui_widget.h"
 
-static inline QString host(const QHttpServerRequest &request)
-{
-    return request.headers()[QStringLiteral("Host")].toString();
-}
-
-static inline QString methodToString(QHttpServerRequest::Method method){
-    QString str = "";
-    switch (method) {
-    case QHttpServerRequest::Method::Get: str = "GET"; break;
-    case QHttpServerRequest::Method::Put: str = "PUT"; break;
-    case QHttpServerRequest::Method::Post: str = "POST"; break;
-    case QHttpServerRequest::Method::Delete: str = "DELETE"; break;
-    }
-
-    return str;
-}
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
-
-    httpServer.route("/", []() {
-            return "Hello world";
-        });
-
-        httpServer.route("/query", [] (const QHttpServerRequest &request) {
-            return QString("%1/query/").arg(host(request));
-        });
-
-        httpServer.route("/query/", [] (qint32 id, const QHttpServerRequest &request) {
-            return QString("%1/query/%2").arg(host(request)).arg(id);
-        });
-
-        httpServer.route("/query/<arg>/log", [] (qint32 id, const QHttpServerRequest &request) {
-            return QString("%1/query/%2/log").arg(host(request)).arg(id);
-        });
-
-        httpServer.route("/query/<arg>/log/", [] (qint32 id, float threshold,
-                                                  const QHttpServerRequest &request) {
-            return QString("%1/query/%2/log/%3").arg(host(request)).arg(id).arg(threshold);
-        });
-
-        httpServer.route("/user/", [] (const qint32 id) {
-            return QString("User %1").arg(id);
-        });
-
-        httpServer.route("/user/<arg>/detail", [] (const qint32 id) {
-            return QString("User %1 detail").arg(id);
-        });
-
-        httpServer.route("/user/<arg>/detail/", [] (const qint32 id, const qint32 year) {
-            return QString("User %1 detail year - %2").arg(id).arg(year);
-        });
-
-        httpServer.route("/assets/<arg>", [] (const QUrl &url) {
-            return QHttpServerResponse::fromFile(QStringLiteral(":/assets/%1").arg(url.path()));
-        });
-
-        httpServer.route("/remote_address", [](const QHttpServerRequest &request) {
-            return request.remoteAddress().toString();
-        });
-
-        const auto port = httpServer.listen(QHostAddress::Any);
-
-
-        httpServer.route("/www", [](const QHttpServerRequest &request) {
-            return methodToString(request.method());
-        });
-
-        if (port == -1) {
-            qDebug() << QCoreApplication::translate(
-                    "QHttpServerExample", "Could not run on http://127.0.0.1:%1/").arg(port);
-            return;
-        }
-
-        qDebug() << QCoreApplication::translate(
-                "QHttpServerExample", "Running on http://127.0.0.1:%1/ ").arg(port);
+    //connect(&server, &QTcpServer::newConnection, this, &Widget::connectToServer);
 }
 
 Widget::~Widget()
 {
     delete ui;
+}
+
+
+void Widget::on_pushButton_bind_clicked()
+{
+    if(!server.listen(QHostAddress::Any, static_cast<quint16>(ui->spinBox_port->value()))){
+        qDebug()<<"Error start listen "<<server.errorString();
+    }
+}
+
+void Widget::on_pushButton_connect_clicked()
+{
+    QStringList lst = ui->lineEdit_ip_address->text().split(':');
+    if(!lst.at(1).trimmed().isEmpty()){
+        ServerIP::pushConnection(lst.at(0), lst.at(1).toInt());
+        ui->tableWidget->setRowCount(ui->tableWidget->rowCount()+1);
+        ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 0, new QTableWidgetItem(lst.at(0)));
+        ui->tableWidget->setItem(ui->tableWidget->rowCount()-1, 1, new QTableWidgetItem(lst.at(1)));
+    }
 }
 
