@@ -8,5 +8,12 @@ Server::Server(QObject *parent):
 
 void Server::incomingConnection(qintptr socketDescriptor)
 {
-    new ServerHandler(socketDescriptor, this);
+   ServerHandler *handler = new ServerHandler(socketDescriptor, this);
+   connect(handler, &ServerHandler::connectionUpdated, this, [this](qintptr socketDescriptor, ServerIP::ServerAddress clientIp, ServerIP::ServerAddress serverIp){
+       emit connectionUpdated(socketDescriptor, clientIp, serverIp);
+   });
+
+   connect(handler, &ServerHandler::connectionClosed, this, [this](qintptr socketDescriptor){
+       emit connectionClosed(socketDescriptor);
+   });
 }

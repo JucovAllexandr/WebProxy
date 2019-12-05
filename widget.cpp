@@ -7,12 +7,49 @@ Widget::Widget(QWidget *parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
+    connect(&server, &Server::connectionUpdated, this, &Widget::updateConnections);
+    connect(&server, &Server::connectionClosed, this, &Widget::deleteConnection);
     //connect(&server, &QTcpServer::newConnection, this, &Widget::connectToServer);
 }
 
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::updateConnections(qintptr socketDescriptor, ServerIP::ServerAddress clientIp, ServerIP::ServerAddress serverIp)
+{
+    bool flag = 0;
+    for(int row = 0; row < ui->tableWidget_connections->rowCount(); row++){
+        if(ui->tableWidget_connections->item(row, 0)->text().toLongLong() == socketDescriptor){
+            ui->tableWidget_connections->item(row, 1)->setText(clientIp.addr.toString()+":"+QString::number(clientIp.port));
+            ui->tableWidget_connections->item(row, 2)->setText(serverIp.addr.toString()+":"+QString::number(serverIp.port));
+            flag = 1;
+            break;
+        }
+    }
+
+    if(!flag){
+        ui->tableWidget_connections->setRowCount(ui->tableWidget_connections->rowCount()+1);
+        QTableWidgetItem *id = new QTableWidgetItem(QString::number(socketDescriptor));
+        QTableWidgetItem *cIp = new QTableWidgetItem(clientIp.addr.toString()+":"+QString::number(clientIp.port));
+        QTableWidgetItem *sIp = new QTableWidgetItem(serverIp.addr.toString()+":"+QString::number(serverIp.port));
+
+        ui->tableWidget_connections->setItem(ui->tableWidget_connections->rowCount()-1, 0, id);
+        ui->tableWidget_connections->setItem(ui->tableWidget_connections->rowCount()-1, 1, cIp);
+        ui->tableWidget_connections->setItem(ui->tableWidget_connections->rowCount()-1, 2, sIp);
+    }
+}
+
+void Widget::deleteConnection(qintptr socketDescriptor)
+{
+    for(int row = 0; row < ui->tableWidget_connections->rowCount(); row++){
+        if(ui->tableWidget_connections->item(row, 0)->text().toLongLong() == socketDescriptor){
+            ui->tableWidget_connections->removeRow(row);
+            break;
+        }
+    }
+
 }
 
 

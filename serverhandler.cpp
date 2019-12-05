@@ -48,6 +48,7 @@ void ServerHandler::serverReadData()
 
 void ServerHandler::clientDisconnected()
 {
+    emit connectionClosed(clientSocket->socketDescriptor());
     this->deleteLater();
 }
 
@@ -62,6 +63,7 @@ void ServerHandler::stateChanged(QAbstractSocket::SocketState socketState)
 
     if(socketState == QAbstractSocket::SocketState::UnconnectedState){
         if(connectionAttemps ==  ServerIP::size()){
+            emit connectionClosed(clientSocket->socketDescriptor());
             clientSocket->close();
             this->deleteLater();
         }else{
@@ -70,6 +72,8 @@ void ServerHandler::stateChanged(QAbstractSocket::SocketState socketState)
             serverSocket->connectToHost(ip.addr, static_cast<quint16>(ip.port));
         }
     }else if (socketState == QAbstractSocket::SocketState::ConnectedState){
+        emit connectionUpdated(clientSocket->socketDescriptor(), ServerIP::ServerAddress(clientSocket->peerAddress().toString(), clientSocket->peerPort()),
+                               ServerIP::ServerAddress(serverSocket->peerAddress().toString(), serverSocket->peerPort()));
         connectionAttemps = 0;
         clientReadData();
     }

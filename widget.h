@@ -22,6 +22,8 @@ public:
 
 private slots:
 
+    void updateConnections(qintptr socketDescriptor, ServerIP::ServerAddress clientIp, ServerIP::ServerAddress serverIp);
+    void deleteConnection(qintptr socketDescriptor);
 
     void on_pushButton_bind_clicked();
 

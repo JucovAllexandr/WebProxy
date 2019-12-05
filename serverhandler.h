@@ -7,6 +7,7 @@
 
 class ServerHandler: public QObject
 {
+    Q_OBJECT
     QTcpSocket *clientSocket;
     QTcpSocket *serverSocket;
     int connectionAttemps = 0;
@@ -23,7 +24,9 @@ private slots:
 
     void stateChanged(QAbstractSocket::SocketState socketState);
 
-
+signals:
+    void connectionUpdated(qintptr socketDescriptor, ServerIP::ServerAddress clientIp, ServerIP::ServerAddress serverIp);
+    void connectionClosed(qintptr socketDescriptor);
 };
 
 #endif // SERVERHANDLER_H
